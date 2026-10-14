@@ -241,7 +241,7 @@ def show_predict():
                 hide_index=True,
             )
 
-    col11, col12, col13, col14 = st.columns([1, 3, 3, 1])
+    col11, col12, col13, col14 = st.columns([1, 2, 2, 1])
 
     with col14:
         if st.button("Generate Structure"):
