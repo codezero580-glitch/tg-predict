@@ -179,7 +179,7 @@ def show_output():
     with col9:
         st.button(
             "Finish",
-            on_click=navigation.buka_landing,
+            on_click=navigation.finish_process,
             use_container_width=True,
             key="about_mulai"
         )
