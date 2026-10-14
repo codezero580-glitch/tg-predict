@@ -42,7 +42,7 @@ def show_output():
 
             /* Metric label */
             [data-testid="stMetricLabel"] {
-                font-size: 10px;
+                font-size: 8px;
             }
             </style>
             """, unsafe_allow_html=True)
