@@ -1,0 +1,6 @@
+[server]
+runOnSave = true
+fileWatcherType = "poll"
+folderWatchList = [
+    "C:/Users/codez/Documents/Projects/tgpredict/pages"
+]
