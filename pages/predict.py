@@ -241,21 +241,24 @@ def show_predict():
                 hide_index=True,
             )
 
-    if st.button("Generate Structure"):
-        try:
-            psmiles = make_psmiles(
-                smiles=smiles,
-                atom_idx_1=atom_idx_1,
-                atom_idx_2=atom_idx_2,
-                bond1=BOND_TYPES[bond1_label],
-                bond2=BOND_TYPES[bond2_label],
-            )
+    col11, col12, col13, col14 = st.columns([1, 3, 3, 1])
 
-            st.session_state.generated_psmiles = psmiles
-
-        except Exception as exc:
-            st.session_state.generated_psmiles = ""
-            st.toast(str(exc))
+    with col14:
+        if st.button("Generate Structure"):
+            try:
+                psmiles = make_psmiles(
+                    smiles=smiles,
+                    atom_idx_1=atom_idx_1,
+                    atom_idx_2=atom_idx_2,
+                    bond1=BOND_TYPES[bond1_label],
+                    bond2=BOND_TYPES[bond2_label],
+                )
+    
+                st.session_state.generated_psmiles = psmiles
+    
+            except Exception as exc:
+                st.session_state.generated_psmiles = ""
+                st.toast(str(exc))
 
     if st.session_state.generated_psmiles:
         st.header("Candidate Structure for Prediction")
