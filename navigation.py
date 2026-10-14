@@ -46,3 +46,9 @@ def prediksi_output():
 
     # Pindah halaman setelah proses selesai
     st.session_state.active_tab = "output"
+
+def finish_process():
+    st.session_state.clear()
+    
+    st.session_state.active_tab = "landing"
+    
