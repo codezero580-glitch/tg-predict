@@ -241,9 +241,9 @@ def show_predict():
                 hide_index=True,
             )
 
-    col11, col12, col13, col14 = st.columns([1, 2, 2, 1])
+    col11, col12, col13 = st.columns([1, 5, 1])
 
-    with col14:
+    with col13:
         if st.button("Generate Structure"):
             try:
                 psmiles = make_psmiles(
