@@ -140,7 +140,7 @@ def show_output():
             )
 
             st.metric(
-                "Glass Transition Temperature (Tg)",
+                "Tg",
                 f"{tg_pred:.2f} K" if repeat_count is not None else "-"
             )
 
