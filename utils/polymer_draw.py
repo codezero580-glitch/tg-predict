@@ -11,38 +11,41 @@ ALLOWED_ELEMENTS = {
 
 def build_polymer(psmiles: str, repeat_count: int = 5):
     """
-    Membentuk rantai polimer dari repeat unit pSMILES.
+    Build a polymer chain from a pSMILES repeat unit.
 
-    Asumsi:
-    - Terdapat tepat dua atom dummy [*].
-    - Setiap atom dummy memiliki satu tetangga.
-    - Sambungan antarunit menggunakan ikatan tunggal.
-    - Hanya unsur dalam ALLOWED_ELEMENTS yang didukung.
+    Assumptions:
+    - The repeat unit contains exactly two dummy atoms [*].
+    - Each dummy atom has exactly one neighboring atom.
+    - Inter-unit connections use single bonds.
+    - Only elements listed in ALLOWED_ELEMENTS are supported.
 
     Returns:
-        Molekul RDKit dengan atom hidrogen dan koordinat 3D,
-        serta nama force field yang digunakan.
+        A sanitized RDKit molecule with explicit hydrogen atoms
+        and 3D coordinates, along with the name of the force field
+        used for geometry optimization.
     """
 
     if not isinstance(psmiles, str) or not psmiles.strip():
-        raise ValueError("pSMILES tidak boleh kosong.")
+        raise ValueError("pSMILES must not be empty.")
 
-    if not isinstance(repeat_count, int) or isinstance(
-        repeat_count, bool
-    ) or repeat_count < 1:
+    if (
+        not isinstance(repeat_count, int)
+        or isinstance(repeat_count, bool)
+        or repeat_count < 1
+    ):
         raise ValueError(
-            "Jumlah unit pengulangan harus berupa integer minimal 1."
+            "The repeat count must be a positive integer."
         )
 
-    # 1. Parsing repeat unit
+    # 1. Parse the repeat unit
     unit = Chem.MolFromSmiles(psmiles)
 
     if unit is None:
         raise ValueError(
-            "pSMILES tidak valid atau tidak dapat dibaca RDKit."
+            "Invalid pSMILES or unsupported SMILES syntax."
         )
 
-    # 2. Validasi unsur SEBELUM membangun rantai
+    # 2. Validate supported elements before building the chain
     unsupported = sorted({
         atom.GetSymbol()
         for atom in unit.GetAtoms()
@@ -53,11 +56,11 @@ def build_polymer(psmiles: str, repeat_count: int = 5):
     if unsupported:
         elements = ", ".join(unsupported)
         raise ValueError(
-            f"Unsur berikut belum didukung: {elements}. "
-            "Silakan gunakan unsur yang didukung aplikasi."
+            f"The following elements are not supported: {elements}. "
+            "Please use elements supported by the application."
         )
 
-    # 3. Identifikasi atom dummy [*]
+    # 3. Identify the dummy atoms [*]
     dummy_atoms = [
         atom for atom in unit.GetAtoms()
         if atom.GetAtomicNum() == 0
@@ -65,18 +68,18 @@ def build_polymer(psmiles: str, repeat_count: int = 5):
 
     if len(dummy_atoms) != 2:
         raise ValueError(
-            f"Diperlukan tepat 2 atom [*], "
-            f"ditemukan {len(dummy_atoms)}."
+            f"Exactly two dummy atoms [*] are required, "
+            f"but {len(dummy_atoms)} were found."
         )
 
     for atom in dummy_atoms:
         if atom.GetDegree() != 1:
             raise ValueError(
-                "Setiap atom [*] harus memiliki tepat satu tetangga."
+                "Each dummy atom [*] must have exactly one neighbor."
             )
 
-        # Untuk implementasi rantai linear ini, dummy harus
-        # memiliki ikatan tunggal ke atom tetangganya.
+        # For this linear-chain implementation, each dummy atom
+        # must be connected to its neighboring atom by a single bond.
         bond = unit.GetBondBetweenAtoms(
             atom.GetIdx(),
             atom.GetNeighbors()[0].GetIdx()
@@ -84,11 +87,12 @@ def build_polymer(psmiles: str, repeat_count: int = 5):
 
         if bond.GetBondType() != Chem.BondType.SINGLE:
             raise ValueError(
-                "Ikatan dari [*] ke atom tetangga harus tunggal "
-                "pada format yang didukung aplikasi ini."
+                "Each dummy atom [*] must be connected to its "
+                "neighboring atom by a single bond in the "
+                "polymer representation supported by this application."
             )
 
-    # 4. Simpan indeks atom dummy dan titik ujung
+    # 4. Store the dummy atom indices and connection endpoints
     dummy_ids = {atom.GetIdx() for atom in dummy_atoms}
 
     left_dummy, right_dummy = sorted(
@@ -101,11 +105,11 @@ def build_polymer(psmiles: str, repeat_count: int = 5):
 
     if left_endpoint == right_endpoint:
         raise ValueError(
-            "Kedua titik sambungan tidak boleh menunjuk "
-            "ke atom yang sama."
+            "The two connection points must not refer "
+            "to the same atom."
         )
 
-    # 5. Bangun salinan repeat unit
+    # 5. Create copies of the repeat unit
     rw = Chem.RWMol()
     endpoint_pairs = []
     all_dummy_ids = []
@@ -132,7 +136,7 @@ def build_polymer(psmiles: str, repeat_count: int = 5):
             offset + idx for idx in dummy_ids
         )
 
-    # 6. Hubungkan ujung antarrepeat unit
+    # 6. Connect adjacent repeat units
     for i in range(repeat_count - 1):
         right_idx = endpoint_pairs[i][1]
         next_left_idx = endpoint_pairs[i + 1][0]
@@ -143,25 +147,25 @@ def build_polymer(psmiles: str, repeat_count: int = 5):
             Chem.BondType.SINGLE,
         )
 
-    # 7. Hapus atom dummy
+    # 7. Remove the dummy atoms
     for idx in sorted(all_dummy_ids, reverse=True):
         rw.RemoveAtom(idx)
 
     mol = rw.GetMol()
 
-    # 8. Validasi struktur hasil penyambungan
+    # 8. Validate the resulting polymer structure
     try:
         Chem.SanitizeMol(mol)
     except Exception as exc:
         raise ValueError(
-            "Struktur hasil penyambungan tidak valid. "
-            "Periksa valensi, jenis ikatan, dan pSMILES."
+            "The resulting polymer structure is invalid. "
+            "Check the valences, bond types, and pSMILES representation."
         ) from exc
 
-    # 9. Tambahkan hidrogen
+    # 9. Add hydrogen atoms
     mol = Chem.AddHs(mol)
 
-    # 10. Buat koordinat 3D
+    # 10. Generate 3D coordinates
     params = AllChem.ETKDGv3()
     params.randomSeed = 42
     params.maxIterations = 1000
@@ -170,10 +174,10 @@ def build_polymer(psmiles: str, repeat_count: int = 5):
 
     if status != 0:
         raise RuntimeError(
-            "Gagal membuat koordinat 3D dengan ETKDG."
+            "Failed to generate 3D coordinates using ETKDG."
         )
 
-    # 11. Optimasi geometri
+    # 11. Optimize the molecular geometry
     if AllChem.MMFFHasAllMoleculeParams(mol):
         result = AllChem.MMFFOptimizeMolecule(
             mol, maxIters=1000
@@ -188,13 +192,13 @@ def build_polymer(psmiles: str, repeat_count: int = 5):
 
     else:
         raise RuntimeError(
-            "MMFF94 dan UFF tidak mendukung seluruh atom "
-            "dalam struktur ini."
+            "Neither MMFF94 nor UFF supports all atoms "
+            "in this molecular structure."
         )
 
     if result < 0:
         raise RuntimeError(
-            "Terjadi kegagalan saat optimasi geometri."
+            "Geometry optimization failed."
         )
 
     return mol, force_field

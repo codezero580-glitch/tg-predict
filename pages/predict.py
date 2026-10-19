@@ -253,9 +253,9 @@ def show_predict():
                     bond1=BOND_TYPES[bond1_label],
                     bond2=BOND_TYPES[bond2_label],
                 )
-    
+
                 st.session_state.generated_psmiles = psmiles
-    
+
             except Exception as exc:
                 st.session_state.generated_psmiles = ""
                 st.toast(str(exc))
