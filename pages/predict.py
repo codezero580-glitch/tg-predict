@@ -25,8 +25,6 @@ def show_predict():
 
     BOND_TYPES = {
         "Single (-)": Chem.BondType.SINGLE,
-        "Double (=)": Chem.BondType.DOUBLE,
-        "Triple (#)": Chem.BondType.TRIPLE,
     }
 
     if "base_smiles" not in st.session_state:
